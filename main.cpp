@@ -35,7 +35,7 @@ void PrintVersion()
 	#else
 		printf(" (x86)\n");
 	#endif
-	printf("version 2020.05.07\n");
+	printf("version 2020.05.08\n");
 	printf("by Eugene Larchenko (https://gitlab.com/eugene77)\n");
 	printf("\n");
 }
@@ -232,6 +232,18 @@ int main(int argc, const char* argv[])
 	return retCode;
 };
 
+
+// computes floor(log2(x))
+int log2i(int x)
+{
+	if (x < 1) throw;
+	int r = 30;
+	for(int b = 1<<30; (x&b)==0; b>>=1) {
+		r--;
+	}
+	return r;
+}
+
 template<class T>
 T* makearr(int cnt) {
 	T* a = new T[cnt];
@@ -291,7 +303,7 @@ int FindOptimalSolution()
 
 	sbyte* gammalen = new sbyte[N];
 	for (int i = 0; i < N; i++)
-		gammalen[i] = sbyte(2 * int(log10(i + 2.0) / log10(2.0)));
+		gammalen[i] = sbyte(2 * log2i(i + 2));
 
 	int* matchLen = new int[N];
 
