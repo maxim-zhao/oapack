@@ -12,6 +12,8 @@ The implementation is pretty straight and does not involve complex data structur
 
 This compressor produces raw compressed stream, no headers, no decompressor included.
 
+Supports back-to-front compression (*-b* option).
+
 ### Other aPACK compressors
 
 * [aplib_pack2 by r57shell](http://gendev.spritesmind.net/forum/viewtopic.php?f=7&t=703&&start=45#p32548)

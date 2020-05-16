@@ -35,15 +35,18 @@ void PrintVersion()
 	#else
 		printf(" (x86)\n");
 	#endif
-	printf("version 2020.05.08\n");
+	printf("version 2020.05.14\n");
 	printf("by Eugene Larchenko (https://gitlab.com/eugene77)\n");
 	printf("\n");
 }
 
-void PrintUsage()
+void PrintUsage(bool verbose)
 {
 	printf("Usage:\n");
-	printf("oapack.exe <inputfilename> [<outputfilename>]\n");
+	printf("  oapack.exe [-b] <inputfilename> [<outputfilename>]\n");
+	if (verbose) {
+		printf("  (-b option enables back-to-front compression)\n");
+	}
 	printf("\n");
 }
 
@@ -56,11 +59,20 @@ bool file_exists(const char* path)
 	return (f != NULL);
 }
 
+void reverse_array(byte* a, int count)
+{
+	for(int i=0, j=count-1; i < j; i++, j--) {
+		auto t = a[i]; a[i] = a[j]; a[j] = t;
+	}
+}
+
 byte* data; // input data
 int size; // data size
 byte packedData[MAX_INPUT_SIZE * 9/8 + 100];
 int packedSize;
 int packedBits; // compressed size in bits
+
+bool reverseMode = false;
 
 clock_t starttime, endtime;
 
@@ -96,16 +108,24 @@ int main(int argc, const char* argv[])
 	{
 		PrintVersion();
 
-		if (argc < 2 || argc > 3)
-		{
-			PrintUsage();
-			throw 1;
+		int a = 1;
+		if (a < argc && strcmp(argv[a], "-b") == 0) {
+			a++;
+			reverseMode = true;
 		}
 
-		const char* inputPath = argv[1];
+		// make input file name
+		if (a >= argc)
+		{
+			PrintUsage(reverseMode ? false : true);
+			throw 1;
+		}
+		const char* inputPath = argv[a++];
 	
+		// make output file name
+		bool outputPathSpecified = (a < argc);
 		char outputPath[1000];
-		const char* s = (argc >= 3) ? argv[2] : argv[1];
+		const char* s = (a < argc) ? argv[a] : inputPath;
 		size_t sl = strlen(s);
 		if (sl + 10 > ARRAYLEN(outputPath))
 		{
@@ -113,7 +133,7 @@ int main(int argc, const char* argv[])
 			throw 2;
 		}
 		strcpy(outputPath, s);
-		if (argc < 3)
+		if (!outputPathSpecified)
 		{
 			strcat(outputPath, ".ap");
 		}
@@ -127,7 +147,7 @@ int main(int argc, const char* argv[])
 		FILE* fIn = fopen(inputPath, "rb");
 		if (!fIn)
 		{
-			printf("Error opening input file\n");
+			printf("Error opening input file %s\n", inputPath);
 			throw 5;
 		}
 		else
@@ -155,15 +175,28 @@ int main(int argc, const char* argv[])
 				if (file_exists(outputPath))
 				{
 					// we don't want overwriting file. Don't waste time, abort now.
-					printf("Error: output file already exists\n");
+					printf("Error: output file already exists: %s\n", outputPath);
 					throw 6;
 				}
 
+				printf("Using back-to-front compression: %s\n", reverseMode ? "Yes" : "No");
+
 				printf("Compressing file: %s\n", inputPath);
+
+				if (reverseMode)
+				{
+					reverse_array(data, size);
+				}
 
 				packedBits = FindOptimalSolution();
 				ReportDone();
 				packedSize = EmitCompressed();
+
+				if (reverseMode)
+				{
+					reverse_array(packedData, packedSize);
+				}
+
 				double duration = (double)(endtime - starttime) / CLOCKS_PER_SEC;
 				printf("time: %.0f sec\n", duration);
 
@@ -178,7 +211,7 @@ int main(int argc, const char* argv[])
 				if (file_exists(outputPath))
 				{
 					// we don't want overwriting file
-					printf("Error: output file already exists\n");
+					printf("Error: output file already exists: %s\n", outputPath);
 					throw 6;
 				}
 				else
@@ -228,7 +261,7 @@ int main(int argc, const char* argv[])
 		retCode = 9;
 	}
 
-	printf("\n");
+	//printf("\n");
 	return retCode;
 };
 
@@ -340,7 +373,7 @@ int FindOptimalSolution()
 
 	for (int pos = N - 1; pos >= 1; pos--)
 	{
-		ReportPosition(pos);
+		ReportPosition(reverseMode ? N-pos : pos);
 
 		matchLen[pos] = -1;
 		for (int hl = pos - 1; hl >= 0; hl--)
