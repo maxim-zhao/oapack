@@ -6,7 +6,7 @@
 #include "math.h" // log10
 #include <algorithm> // min,max
 
-using namespace std;
+// using namespace std;
 
 // for sanity checks
 #define throw_impossible() { throw std::exception(); }
@@ -200,9 +200,9 @@ int main(int argc, const char* argv[])
 				double duration = (double)(endtime - starttime) / CLOCKS_PER_SEC;
 				printf("time: %.0f sec\n", duration);
 
-				double ratio = (double)packedSize / max(size, 1);
+				double ratio = (double)packedSize / std::max(size, 1);
 				if (ratio > 1) {
-					ratio = max(ratio, 1.001);
+					ratio = std::max(ratio, 1.001);
 				}
 				char* warning = (ratio >= 1) ? " (!)" : "";
 				printf("compression: %d / %d = %.3f%s\n", packedSize, size, ratio, warning);
@@ -329,7 +329,7 @@ int FindOptimalSolution()
 	// First, find longest possible match. 
 	// This helps reduce memory requirement in most practical cases.
 	int longestMatch = FindLongestMatch(data, size);
-	longestMatch = max(1, longestMatch); // at least one position ahead is required for Put0/Put1Byte ops
+	longestMatch = std::max(1, longestMatch); // at least one position ahead is required for Put0/Put1Byte ops
 
 	int N = size;
 	if (N < 1) throw_impossible();
