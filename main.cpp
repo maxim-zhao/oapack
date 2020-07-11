@@ -189,7 +189,7 @@ int main(int argc, const char* argv[])
 				}
 
 				packedBits = FindOptimalSolution();
-				ReportDone();
+				//ReportDone();
 				packedSize = EmitCompressed();
 
 				if (reverseMode)
@@ -353,7 +353,7 @@ int FindOptimalSolution()
 		}
 		memReq += (int64)2 * pos * sizeof(Op);
 	}
-	printf("Allocating %I64d MiB of memory...\n", memReq >> 20);
+//	printf("Allocating %I64d MiB of memory...\n", memReq >> 20);
 
 	for (int pos = N - 1; pos >= 1; pos--) {
 		if (pos + longestMatch >= N) {
@@ -366,14 +366,14 @@ int FindOptimalSolution()
 	dp2[N] = makearr<int>(N); // result for pos=N is 0
 	dp1[N] = makearr<int>(N); // result for pos=N is 0
 
-	printf("Memory allocated successfully\n");
+//	printf("Memory allocated successfully\n");
 
-	printf("Processing position:\n");
+//	printf("Processing position:\n");
 	starttime = endtime = clock();
 
 	for (int pos = N - 1; pos >= 1; pos--)
 	{
-		ReportPosition(reverseMode ? N-pos : pos);
+//		ReportPosition(reverseMode ? N-pos : pos);
 
 		matchLen[pos] = -1;
 		for (int hl = pos - 1; hl >= 0; hl--)
