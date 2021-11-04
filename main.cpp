@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <time.h> // clock_t
 #include <new> // std::bad_alloc
-#include "math.h" // log10
 #include <algorithm> // min,max
 
 using namespace std;
@@ -11,6 +10,7 @@ using namespace std;
 // for sanity checks
 #define throw_impossible() { throw std::exception(); }
 
+// Do not increase this constant, as it may lead to ushort type overflow!
 #define MAX_INPUT_SIZE 0x10000
 #define MIN_INPUT_SIZE 1
 
