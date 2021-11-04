@@ -29,13 +29,13 @@ int EmitCompressed();
 void PrintVersion()
 {
 	printf("\n");
-	printf("Optimal aPACK compressor");
+	printf("Optimal aPLib compressor");
 	#ifdef _WIN64
 		printf(" (x64)\n");
 	#else
 		printf(" (x86)\n");
 	#endif
-	printf("version 2020.05.14\n");
+	printf("version 2021.11.04\n");
 	printf("by Eugene Larchenko (https://gitlab.com/eugene77)\n");
 	printf("\n");
 }
@@ -327,7 +327,7 @@ Op* dp_op[2][MAX_INPUT_SIZE + 1]; // solution for lwm=1 and lwm=2
 int FindOptimalSolution()
 {
 	// First, find longest possible match. 
-	// This helps reduce memory requirement in most practical cases.
+	// This helps reducing memory requirements in most practical cases.
 	int longestMatch = FindLongestMatch(data, size);
 	longestMatch = max(1, longestMatch); // at least one position ahead is required for Put0/Put1Byte ops
 
@@ -514,7 +514,7 @@ int FindOptimalSolution()
 
 		if (pos + longestMatch <= N)
 		{
-			// we don't need answers for these positions anymore, let's reuse memory
+			// we don't need results for these positions anymore, let's reuse memory
 			delete[] dp1[pos + longestMatch]; dp1[pos + longestMatch] = NULL;
 			delete[] dp2[pos + longestMatch]; dp2[pos + longestMatch] = NULL;
 		}
@@ -538,8 +538,7 @@ int FindOptimalSolution()
 	return reslen;
 }
 
-// Builds final compressed block using precalculations
-// in dp_op array made by FindOptimalSolution routine
+// Builds final compressed block using precalculations from dp_op array
 int EmitCompressed()
 {
 	int rpos = 0;
@@ -550,20 +549,22 @@ int EmitCompressed()
 
 	int apos = -1;
 	int acnt = 8;
-	auto emitBit = [&apos, &acnt, &rpos](int b) {
+	auto emitBit = [&apos, &acnt, &rpos](int bit) {
 		if (acnt == 8) {
 			apos = rpos;
 			packedData[rpos++] = 0;
 			acnt = 0;
 		}
-		packedData[apos] = packedData[apos] * 2 + (b & 1);
+		packedData[apos] = packedData[apos] * 2 + (bit & 1);
 		acnt++;
 	};
 
 	auto emitGamma = [emitBit](int x) {
 		if (x < 2) throw_impossible();
 		int b = 1 << 30;
-		while ((x & b) == 0) b >>= 1;
+		while ((x & b) == 0) {
+			b >>= 1;
+		}
 		while ((b >>= 1) != 0) {
 			emitBit((x & b) == 0 ? 0 : 1);
 			emitBit(b == 1 ? 0 : 1);
