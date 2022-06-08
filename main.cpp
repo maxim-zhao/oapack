@@ -86,7 +86,7 @@ void ReportPosition(int pos)
 	if (inprogress) {
 		printf("\r"); // move cursor back
 	}
-	printf("%d ", pos);
+	printf("%d    ", pos);
 	inprogress = true;
 }
 void ReportDone()
@@ -375,9 +375,14 @@ int FindOptimalSolution()
 	printf("Processing position:\n");
 	starttime = endtime = clock();
 
+	double lastreport = 0;
 	for (int pos = N - 1; pos >= 1; pos--)
 	{
-		ReportPosition(reverseMode ? N-pos : pos);
+		double now = clock() / (double)CLOCKS_PER_SEC;
+		if (now < lastreport || now > lastreport + 0.03) { // limit to 30 reports/sec
+			ReportPosition(reverseMode ? N-pos : pos);
+			lastreport = now;
+		}
 
 		matchLen[pos] = -1;
 		for (int hl = pos - 1; hl >= 0; hl--)
