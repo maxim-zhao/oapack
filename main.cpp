@@ -698,9 +698,8 @@ int FindLongestMatch(const byte* a, int n)
 	}
 
 	// Using binary search to find L.
-	
-	// Using sliding window hash and a hashtable to find matches of given len.
-	// Collisions are possible, in which case the result will be greater than it should, which is ok.
+	// Using sliding hash and a hashtable to find matches of given len.
+	// Collisions are possible, in which case the result will be greater than it should, which is acceptable.
 
 	const int M1 = 0x000ffffd; // some small prime
 	const int M2 = 0x007ffff1; // some bigger prime
@@ -731,11 +730,11 @@ int FindLongestMatch(const byte* a, int n)
 		hashtable[hash1] = hash2;
 		for (; i < n; i++)
 		{
-			hash1 = ((hash1 * 256 - c1 * a[i - L] + a[i]) % M1 + M1) % M1;
-			hash2 = ((hash2 * 256 - c2 * a[i - L] + a[i]) % M2 + M2) % M2;
+			hash1 = ((hash1 * 256 - c1 * a[i-L] + a[i]) % M1 + M1) % M1;
+			hash2 = ((hash2 * 256 - c2 * a[i-L] + a[i]) % M2 + M2) % M2;
 
 			int j;
-			for (j = hash1; hashtable[j] >= 0; j = (j + 1) % M1) {
+			for (j = hash1; hashtable[j] >= 0; j = (j+1) % M1) {
 				if (hashtable[j] == hash2) {
 					foundMatch = true;
 					goto k0;
@@ -749,13 +748,14 @@ int FindLongestMatch(const byte* a, int n)
 		if (foundMatch) {
 			min = L;
 		} else {
-			max = L - 1;
+			max = L-1;
 		}
 	}
 
 	delete[] hashtable;
 
-	if (min != max) throw_impossible();
+	if (min != max)
+		throw_impossible();
 
 	return min;
 }
