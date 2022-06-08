@@ -34,11 +34,11 @@ void PrintVersion()
 {
 	printf("\n");
 	printf("Optimal aPLib compressor");
-	#ifdef _WIN64
+	if (sizeof(void*) > 4) {
 		printf(" (x64)\n");
-	#else
+	} else {
 		printf(" (x86)\n");
-	#endif
+	}
 	printf("version 2021.11.04\n");
 	printf("by Eugene Larchenko (https://gitlab.com/eugene77)\n");
 	printf("\n");
