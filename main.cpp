@@ -691,7 +691,7 @@ int EmitCompressed()
 
 
 // Find max L, 0<=L<=n-1, such that there exists i,j such that a{i..i+L-1} == a{j..j+L-1}
-int FindLongestMatch(byte* a, int n)
+int FindLongestMatch(const byte* a, int n)
 {
 	if (n < 2) {
 		return 0;
@@ -704,8 +704,14 @@ int FindLongestMatch(byte* a, int n)
 
 	const int M1 = 0x000ffffd; // some small prime
 	const int M2 = 0x007ffff1; // some bigger prime
+	if (n > M1 / 2) {
+		throw exception("file is too large"); // need larger hashtable
+	}
 	int* hashtable = new int[M1];
-	int min = 0, max = n - 1;
+	if (!hashtable) {
+		throw std::bad_alloc();
+	}
+	int min = 0, max = n-1;
 	while (min < max)
 	{
 		int L = (min + max + 1) / 2;
