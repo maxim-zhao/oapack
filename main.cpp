@@ -1,4 +1,8 @@
-﻿
+﻿/*
+ * Copyright (c) 2020-2022 Eugene Larchenko <el6345@gmail.com>. All rights reserved.
+ * See the attached LICENSE.txt file.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h> // clock_t
