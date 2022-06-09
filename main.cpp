@@ -39,7 +39,7 @@ void PrintVersion()
 	} else {
 		printf(" (x86)\n");
 	}
-	printf("version 2021.11.04\n");
+	printf("version 2022.06.09\n");
 	printf("by Eugene Larchenko (https://gitlab.com/eugene77)\n");
 	printf("\n");
 }
