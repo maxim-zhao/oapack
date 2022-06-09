@@ -26,7 +26,7 @@ typedef signed __int64 int64;
 
 #define ARRAYLEN(a) (sizeof a / sizeof a[0])
 
-int FindLongestMatch(byte* a, int n);
+int FindLongestMatch(const byte* a, int n);
 int FindOptimalSolution();
 int EmitCompressed();
 
@@ -121,7 +121,7 @@ int main(int argc, const char* argv[])
 		// make input file name
 		if (a >= argc)
 		{
-			PrintUsage(reverseMode ? false : true);
+			PrintUsage(true);
 			throw 1;
 		}
 		const char* inputPath = argv[a++];
