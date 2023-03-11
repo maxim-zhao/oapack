@@ -1,9 +1,12 @@
-﻿
+﻿/*
+ * Copyright (c) 2020-2022 Eugene Larchenko <el6345@gmail.com>. All rights reserved.
+ * See the attached LICENSE.txt file.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h> // clock_t
 #include <new> // std::bad_alloc
-#include "math.h" // log10
 #include <algorithm> // min,max
 
 // using namespace std;
@@ -11,6 +14,7 @@
 // for sanity checks
 #define throw_impossible() { throw std::exception(); }
 
+// Do not increase this constant, as it may lead to ushort type overflow!
 #define MAX_INPUT_SIZE 0x10000
 #define MIN_INPUT_SIZE 1
 
@@ -22,20 +26,20 @@ typedef signed __int64 int64;
 
 #define ARRAYLEN(a) (sizeof a / sizeof a[0])
 
-int FindLongestMatch(byte* a, int n);
+int FindLongestMatch(const byte* a, int n);
 int FindOptimalSolution();
 int EmitCompressed();
 
 void PrintVersion()
 {
 	printf("\n");
-	printf("Optimal aPACK compressor");
-	#ifdef _WIN64
+	printf("Optimal aPLib compressor");
+	if (sizeof(void*) > 4) {
 		printf(" (x64)\n");
-	#else
+	} else {
 		printf(" (x86)\n");
-	#endif
-	printf("version 2020.05.14\n");
+	}
+	printf("version 2022.06.09\n");
 	printf("by Eugene Larchenko (https://gitlab.com/eugene77)\n");
 	printf("\n");
 }
@@ -117,7 +121,7 @@ int main(int argc, const char* argv[])
 		// make input file name
 		if (a >= argc)
 		{
-			PrintUsage(reverseMode ? false : true);
+			PrintUsage(true);
 			throw 1;
 		}
 		const char* inputPath = argv[a++];
@@ -327,7 +331,7 @@ Op* dp_op[2][MAX_INPUT_SIZE + 1]; // solution for lwm=1 and lwm=2
 int FindOptimalSolution()
 {
 	// First, find longest possible match. 
-	// This helps reduce memory requirement in most practical cases.
+	// This helps reducing memory requirements in most practical cases.
 	int longestMatch = FindLongestMatch(data, size);
 	longestMatch = std::max(1, longestMatch); // at least one position ahead is required for Put0/Put1Byte ops
 
@@ -371,9 +375,14 @@ int FindOptimalSolution()
 //	printf("Processing position:\n");
 	starttime = endtime = clock();
 
+//	double lastreport = 0;
 	for (int pos = N - 1; pos >= 1; pos--)
 	{
-//		ReportPosition(reverseMode ? N-pos : pos);
+//		double now = clock() / (double)CLOCKS_PER_SEC;
+//		if (now < lastreport || now > lastreport + 0.03) { // limit to 30 reports/sec
+//			ReportPosition(reverseMode ? N-pos : pos);
+//			lastreport = now;
+//		}
 
 		matchLen[pos] = -1;
 		for (int hl = pos - 1; hl >= 0; hl--)
@@ -514,7 +523,7 @@ int FindOptimalSolution()
 
 		if (pos + longestMatch <= N)
 		{
-			// we don't need answers for these positions anymore, let's reuse memory
+			// we don't need results for these positions anymore, let's reuse memory
 			delete[] dp1[pos + longestMatch]; dp1[pos + longestMatch] = NULL;
 			delete[] dp2[pos + longestMatch]; dp2[pos + longestMatch] = NULL;
 		}
@@ -538,8 +547,7 @@ int FindOptimalSolution()
 	return reslen;
 }
 
-// Builds final compressed block using precalculations
-// in dp_op array made by FindOptimalSolution routine
+// Builds final compressed block using precalculations from dp_op array
 int EmitCompressed()
 {
 	int rpos = 0;
@@ -550,20 +558,22 @@ int EmitCompressed()
 
 	int apos = -1;
 	int acnt = 8;
-	auto emitBit = [&apos, &acnt, &rpos](int b) {
+	auto emitBit = [&apos, &acnt, &rpos](int bit) {
 		if (acnt == 8) {
 			apos = rpos;
 			packedData[rpos++] = 0;
 			acnt = 0;
 		}
-		packedData[apos] = packedData[apos] * 2 + (b & 1);
+		packedData[apos] = packedData[apos] * 2 + (bit & 1);
 		acnt++;
 	};
 
 	auto emitGamma = [emitBit](int x) {
 		if (x < 2) throw_impossible();
 		int b = 1 << 30;
-		while ((x & b) == 0) b >>= 1;
+		while ((x & b) == 0) {
+			b >>= 1;
+		}
 		while ((b >>= 1) != 0) {
 			emitBit((x & b) == 0 ? 0 : 1);
 			emitBit(b == 1 ? 0 : 1);
@@ -686,20 +696,25 @@ int EmitCompressed()
 
 
 // Find max L, 0<=L<=n-1, such that there exists i,j such that a{i..i+L-1} == a{j..j+L-1}
-int FindLongestMatch(byte* a, int n)
+int FindLongestMatch(const byte* a, int n)
 {
 	if (n < 2) {
 		return 0;
 	}
 
 	// Using binary search to find L.
-	
-	// Using sliding window hash and a hashtable to find matches of given len.
-	// Collisions are possible, in which case the result will be greater than it should, which is ok.
+	// Using sliding hash and a hashtable to find matches of given len.
+	// Collisions are possible, in which case the result will be greater than it should, which is acceptable.
 
 	const int M1 = 0x000ffffd; // some small prime
 	const int M2 = 0x007ffff1; // some bigger prime
+	if (n > M1 / 2) {
+		throw exception("file is too large"); // need larger hashtable
+	}
 	int* hashtable = new int[M1];
+	if (!hashtable) {
+		throw std::bad_alloc();
+	}
 	int min = 0, max = n - 1;
 	while (min < max)
 	{
@@ -744,7 +759,8 @@ int FindLongestMatch(byte* a, int n)
 
 	delete[] hashtable;
 
-	if (min != max) throw_impossible();
+	if (min != max)
+		throw_impossible();
 
 	return min;
 }
