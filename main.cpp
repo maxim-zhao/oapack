@@ -709,7 +709,7 @@ int FindLongestMatch(const byte* a, int n)
 	const int M1 = 0x000ffffd; // some small prime
 	const int M2 = 0x007ffff1; // some bigger prime
 	if (n > M1 / 2) {
-		throw exception("file is too large"); // need larger hashtable
+		throw std::exception("file is too large"); // need larger hashtable
 	}
 	int* hashtable = new int[M1];
 	if (!hashtable) {
